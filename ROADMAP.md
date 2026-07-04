@@ -1,77 +1,80 @@
 # ARGOS — Roadmap
 
-An 8-week, phased plan for the university call. The philosophy is **honest
-increments**: each phase turns a stub into something real, and nothing is marked
-"done" until it runs.
+Plan por fases de 8 semanas para la convocatoria universitaria. La filosofía es
+**incrementos honestos**: cada fase convierte un stub en algo real, y nada se marca
+como "hecho" hasta que se ejecuta.
 
-Legend: ✅ done · 🟡 partial · ⛔ stub / not started
+Leyenda: ✅ hecho · 🟡 parcial · ⛔ stub / sin empezar
 
 ---
 
-## Current status snapshot
+## Estado actual
 
-| Area | Status | Notes |
+| Área | Estado | Notas |
 |------|--------|-------|
-| `core` models & taxonomies | ✅ | Real, tested. |
-| `fingerprint_db` (semantic fingerprints + mutation detection) | ✅ | **Differentiator — implemented for real.** In-memory store. |
-| `component_analyzer` scoring from manifest | 🟡 | Heuristics for MCP01–MCP03; MCP04–MCP10 pending. |
-| `component_analyzer` live MCP connection | ⛔ | `NotImplementedError` stub. |
-| `interaction_analyzer` guardian model (DeBERTa) | 🟡 | Real wrapper; heuristic fallback. Needs eval. |
-| `api` (FastAPI) | ✅ | Endpoints wired to real modules; in-memory DB. |
-| `data` sample dataset + seeding | 🟡 | Sample real; public-dataset download stubbed. |
-| Persistence / vector DB | ⛔ | In-memory only. |
-| Community/reputation backend | ⛔ | Single-process only. |
+| `core` modelos y taxonomías | ✅ | Real, testeado. |
+| `fingerprint_db` (huellas + mutaciones) | ✅ | **Diferenciador — implementado de verdad.** Almacén en memoria. |
+| `component_analyzer` scoring desde manifiesto | 🟡 | Heurísticas MCP01–MCP03; MCP04–MCP10 pendientes. |
+| `component_analyzer` conexión MCP en vivo | ⛔ | Stub `NotImplementedError`. |
+| `interaction_analyzer` guardián (DeBERTa) | 🟡 | Wrapper real + fallback heurístico. Falta evaluar. |
+| `api` (FastAPI) | ✅ | Endpoints conectados a módulos reales; DB en memoria. |
+| `data` dataset de ejemplo + seeding | 🟡 | Sample real; descarga de datasets públicos stub. |
+| Persistencia / vector DB | ⛔ | Solo en memoria. |
+| Backend colaborativo/reputación | ⛔ | Un solo proceso. |
 
 ---
 
-## Phase 1 — Foundations & data (Weeks 1–2)
-**Goal: a runnable core and a real data pipeline.**
+## Fase 1 — Fundaciones y datos (Semanas 1–2)
+**Objetivo: un núcleo ejecutable y un pipeline de datos real.**
 
-- ✅ Project skeleton, core models, taxonomies, tests, CI-friendly offline tests.
-- ✅ Fingerprint DB with cosine-similarity mutation detection + demo.
-- ⛔ Implement `data/download.py`:
-  - Ingest public prompt-injection / jailbreak datasets (Hugging Face Hub),
-    normalizing to the ARGOS schema. **Record each license.**
-  - Pull MCP-related CVEs from the NVD API into a local catalog.
-- ⛔ Expand `sample_attacks.json` into a larger labeled seed set.
+- ✅ Esqueleto del proyecto, modelos core, taxonomías, tests offline.
+- ✅ Base de huellas con detección de mutaciones por coseno + demo.
+- ⛔ Implementar `data/download.py`:
+  - Ingerir datasets públicos de inyección / jailbreak (Hugging Face Hub),
+    normalizando al esquema de ARGOS. **Registrar cada licencia.**
+  - Extraer CVEs de MCP desde la API de NVD a un catálogo local.
+- ⛔ Ampliar `sample_attacks.json` a un conjunto etiquetado mayor.
+- ⛔ Citar la fuente primaria de las tres estadísticas del README.
 
-## Phase 2 — Component analyzer: from static to live (Weeks 3–4)
-**Goal: analyze real MCP servers, not just manifests.**
+## Fase 2 — Component analyzer: de estático a en vivo (Semanas 3–4)
+**Objetivo: analizar servidores MCP reales, no solo manifiestos.**
 
-- ⛔ Implement `inventory_live_server()` with a real MCP client (stdio + HTTP/SSE):
-  call `tools/list`, `prompts/list`, `resources/list`.
-- ⛔ Add heuristics for MCP04–MCP10 (command injection, auth, transport, logging).
-- 🟡 Improve MCP01–MCP03 precision (reduce false positives; add unit fixtures).
-- ⛔ Cross-reference findings against the CVE catalog from Phase 1.
+- ⛔ Implementar `inventory_live_server()` con un cliente MCP real (stdio + HTTP/SSE):
+  llamar a `tools/list`, `prompts/list`, `resources/list`.
+- ⛔ Añadir heurísticas para MCP04–MCP10 (inyección de comandos, auth, transporte, logging).
+- 🟡 Mejorar la precisión de MCP01–MCP03 (reducir falsos positivos; fixtures).
+- ⛔ Cruzar hallazgos con el catálogo de CVEs de la Fase 1.
 
-## Phase 3 — Interaction analyzer & fingerprint integration (Weeks 5–6)
-**Goal: detections feed the global fingerprint DB automatically.**
+## Fase 3 — Interaction analyzer e integración de huellas (Semanas 5–6)
+**Objetivo: las detecciones alimentan automáticamente la base global de huellas.**
 
-- 🟡 Evaluate the DeBERTa guardian model on a held-out set; report precision/recall.
-- ⛔ Pipeline: every detected attack is fingerprinted and contributed to the DB,
-  auto-merging mutations (closing the loop between detection and reputation).
-- ⛔ Threshold calibration for mutation detection against a labeled corpus.
-- ⛔ Optional second guardian model for ensemble / comparison.
+- 🟡 Evaluar el guardián DeBERTa sobre un conjunto de prueba; reportar precisión/recall.
+- ⛔ Pipeline: cada ataque detectado se convierte en huella y se aporta a la DB,
+  fusionando mutaciones (cerrando el bucle entre detección y reputación).
+- ⛔ Calibrar el umbral de detección de mutaciones sobre un corpus etiquetado.
+- ⛔ Segundo modelo guardián opcional para ensemble / comparación.
 
-## Phase 4 — Persistence, reputation & polish (Weeks 7–8)
-**Goal: a demoable, multi-user-shaped platform.**
+## Fase 4 — Persistencia, reputación y pulido (Semanas 7–8)
+**Objetivo: una plataforma demoable con forma multiusuario.**
 
-- ⛔ Swap in a real vector database (FAISS / Qdrant / pgvector) behind the existing
-  `FingerprintDB` API (no public-API change).
-- ⛔ Persistent, shared reputation store; contribution provenance & rate limiting.
-- ⛔ Minimal web UI or CLI over the API for the demo.
-- 🟡 Harden the REST API (auth, validation, error handling).
-- ⛔ Packaging, `Dockerfile`, and a one-command demo environment.
+- ⛔ Sustituir por una vector DB real (FAISS / Qdrant / pgvector) tras la API actual
+  de `FingerprintDB` (sin cambiar la API pública).
+- ⛔ Almacén de reputación persistente y compartido; procedencia y rate limiting.
+- ⛔ UI web o CLI mínima sobre la API para la demo.
+- 🟡 Endurecer la API REST (auth, validación, manejo de errores).
+- ⛔ Empaquetado, `Dockerfile` y entorno de demo de un solo comando.
 
 ---
 
-## Explicitly out of scope (for now)
-- Production multi-tenant auth / accounts.
-- Automated remediation / patching of MCP servers.
-- Real-time inline proxying of agent traffic.
+## Fuera de alcance (por ahora)
+- Auth / cuentas multi-tenant de producción.
+- Remediación / parcheo automático de servidores MCP.
+- Proxy inline en tiempo real del tráfico de agentes.
 
-## Key risks & mitigations
-- **Embedding threshold tuning** → build a labeled eval set early (Phase 1/3).
-- **Dataset licensing** → track licenses per source; ship only permissive samples.
-- **Model download size/latency** → keep the offline `HashingEmbedder` +
-  heuristic detector paths working for CI and constrained demos.
+## Riesgos clave y mitigaciones
+- **Ajuste del umbral de embeddings** → construir pronto un conjunto de evaluación
+  etiquetado (Fase 1/3).
+- **Licencias de datasets** → registrar licencias por fuente; distribuir solo
+  ejemplos permisivos.
+- **Tamaño/latencia de descarga del modelo** → mantener funcionando las rutas
+  offline (`HashingEmbedder` + detector heurístico) para CI y demos limitadas.

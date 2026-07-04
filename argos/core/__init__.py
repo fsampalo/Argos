@@ -1,4 +1,4 @@
-"""Core data models and reference taxonomies shared across ARGOS."""
+"""Modelos de datos y taxonomías de referencia compartidos por ARGOS."""
 
 from argos.core.models import (
     ComponentInventory,

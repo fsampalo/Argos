@@ -1,23 +1,23 @@
-# ARGOS runtime dependencies.
-# Pinned loosely (>=) for an early-stage project; tighten before any release.
+# Dependencias de ejecución de ARGOS.
+# Fijadas de forma laxa (>=) por ser fase inicial; ajustar antes de un release.
 
-# --- Core / models ---
+# --- Núcleo / modelos ---
 pydantic>=2.6,<3
 
 # --- API ---
 fastapi>=0.110
 uvicorn[standard]>=0.27
 
-# --- Fingerprint DB (semantic embeddings — the differentiator) ---
-# Pulls in torch as a transitive dependency. This is the heaviest install and
-# what the demo needs. On first run it downloads a small (~80 MB) model.
+# --- Base de huellas (embeddings semánticos — el diferenciador) ---
+# Arrastra torch como dependencia transitiva. Es la instalación más pesada y lo
+# que necesita la demo. La primera vez descarga un modelo pequeño (~80 MB).
 sentence-transformers>=2.6
 
-# --- Interaction analyzer (guardian model) ---
-# Needed for the DeBERTa prompt-injection classifier. torch is required as a
-# backend (installed with sentence-transformers above, but listed for clarity).
+# --- Interaction analyzer (modelo guardián) ---
+# Necesario para el clasificador DeBERTa de inyección de prompt. torch se requiere
+# como backend (ya lo instala sentence-transformers, pero se lista por claridad).
 transformers>=4.40
 
-# --- Dev / tests (kept here for simplicity in an early-stage repo) ---
+# --- Desarrollo / tests (aquí por simplicidad en fase inicial) ---
 pytest>=8.0
-httpx>=0.27          # FastAPI TestClient
+httpx>=0.27          # TestClient de FastAPI

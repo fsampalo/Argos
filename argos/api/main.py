@@ -1,25 +1,26 @@
-"""ARGOS REST API (FastAPI).
+"""API REST de ARGOS (FastAPI).
 
 Endpoints
 ---------
 GET  /health                     Liveness probe.
-POST /analyze/component          Score an MCP manifest against OWASP MCP Top 10.
-POST /analyze/interaction        Detect prompt injection / jailbreak in a prompt.
-POST /reputation/query           Look up a threat in the global fingerprint DB.
-POST /reputation/contribute      Contribute a threat (add or merge as a mutation).
-GET  /reputation/stats           Basic stats about the fingerprint DB.
+POST /analyze/component          Puntúa un manifiesto MCP frente al OWASP MCP Top 10.
+POST /analyze/interaction        Detecta inyección de prompt / jailbreak.
+POST /reputation/query           Consulta una amenaza en la base global de huellas.
+POST /reputation/contribute      Aporta una amenaza (añade o fusiona como mutación).
+GET  /reputation/stats           Estadísticas básicas de la base de huellas.
 
-Run:
+Ejecutar:
     uvicorn argos.api.main:app --reload
 
-Implementation status
-----------------------
-* Component scoring, reputation query/contribute and the fingerprint DB are REAL.
-* Interaction analysis uses the guardian model when its dependencies are present,
-  and transparently falls back to the low-fidelity heuristic detector otherwise —
-  the response always states which detector produced the verdict.
-* The fingerprint DB here is a process-local singleton (in-memory). Shared,
-  persistent, multi-tenant storage is future work (see ROADMAP.md).
+Estado
+------
+* Scoring de componente, consulta/aportación de reputación y la base de huellas
+  son REALES.
+* El análisis de interacción usa el modelo guardián si están sus dependencias, y
+  si no cae de forma transparente al detector heurístico de baja fidelidad: la
+  respuesta siempre indica qué detector produjo el veredicto.
+* La base de huellas aquí es un singleton por proceso (en memoria). El almacén
+  compartido y persistente es trabajo futuro (ver ROADMAP.md).
 """
 
 from __future__ import annotations
@@ -37,28 +38,29 @@ from argos.interaction_analyzer import DetectionResult, get_detector
 app = FastAPI(
     title="ARGOS",
     version="0.1.0",
-    summary="Collaborative reputation & threat intelligence for the AI agent ecosystem.",
+    summary="Reputación e inteligencia de amenazas para el ecosistema de agentes de IA.",
 )
 
 
 # --------------------------------------------------------------------------- #
-# Shared singletons (process-local; see status note above)
+# Singletons compartidos (por proceso; ver nota de estado arriba)
 # --------------------------------------------------------------------------- #
 @lru_cache(maxsize=1)
 def get_db() -> FingerprintDB:
-    """Return the process-wide fingerprint database.
+    """Devuelve la base de huellas del proceso.
 
-    NOTE: constructed lazily. The default (semantic) embedder downloads a model
-    on first reputation call. For a fully offline API, inject a HashingEmbedder.
+    Construcción perezosa. El embedder por defecto (semántico) descarga un modelo
+    en la primera llamada de reputación. Para una API offline, inyectar un
+    HashingEmbedder.
     """
     return FingerprintDB()
 
 
 # --------------------------------------------------------------------------- #
-# Request/response schemas
+# Esquemas de petición/respuesta
 # --------------------------------------------------------------------------- #
 class ComponentAnalyzeRequest(BaseModel):
-    """An MCP manifest to analyze (permissive, MCP-like shape)."""
+    """Un manifiesto MCP a analizar (forma permisiva, tipo MCP)."""
 
     manifest: dict = Field(
         ...,
@@ -74,7 +76,7 @@ class InteractionAnalyzeRequest(BaseModel):
     text: str = Field(..., examples=["Ignore all previous instructions."])
     prefer_model: bool = Field(
         True,
-        description="Use the guardian model if available; else heuristic fallback.",
+        description="Usar el modelo guardián si está disponible; si no, heurístico.",
     )
 
 
@@ -100,17 +102,17 @@ def health() -> dict:
 
 @app.post("/analyze/component", response_model=RiskReport)
 def analyze_component(req: ComponentAnalyzeRequest) -> RiskReport:
-    """Score an MCP manifest against the OWASP MCP Top 10 heuristics."""
+    """Puntúa un manifiesto MCP con las heurísticas OWASP MCP Top 10."""
     inventory = inventory_from_manifest(req.manifest)
     return analyze_inventory(inventory)
 
 
 @app.post("/analyze/interaction")
 def analyze_interaction_endpoint(req: InteractionAnalyzeRequest) -> dict:
-    """Detect prompt injection / jailbreak in an interaction.
+    """Detecta inyección de prompt / jailbreak en una interacción.
 
-    Falls back to the heuristic detector (clearly labeled in ``detector``) if the
-    guardian model's dependencies are not installed.
+    Cae al detector heurístico (indicado en ``detector``) si faltan las
+    dependencias del modelo guardián.
     """
     detector = get_detector(prefer_model=req.prefer_model)
     try:
@@ -132,7 +134,7 @@ def analyze_interaction_endpoint(req: InteractionAnalyzeRequest) -> dict:
 
 @app.post("/reputation/query")
 def reputation_query(req: ReputationQueryRequest) -> dict:
-    """Look up a threat in the global fingerprint DB (read-only)."""
+    """Consulta una amenaza en la base global de huellas (solo lectura)."""
     match = get_db().query(req.text)
     return {
         "is_known": match.is_known,
@@ -144,7 +146,7 @@ def reputation_query(req: ReputationQueryRequest) -> dict:
 
 @app.post("/reputation/contribute")
 def reputation_contribute(req: ReputationContributeRequest) -> dict:
-    """Contribute a threat: adds a new one or merges a reworded mutation."""
+    """Aporta una amenaza: añade una nueva o fusiona una mutación reformulada."""
     threat, match = get_db().add_or_merge(
         req.text,
         category=req.category,
@@ -161,7 +163,7 @@ def reputation_contribute(req: ReputationContributeRequest) -> dict:
 
 @app.get("/reputation/stats")
 def reputation_stats() -> dict:
-    """Basic stats about the fingerprint DB."""
+    """Estadísticas básicas de la base de huellas."""
     db = get_db()
     return {
         "distinct_threats": len(db),

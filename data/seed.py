@@ -1,10 +1,10 @@
-"""Seed a :class:`FingerprintDB` from the bundled sample dataset.
+"""Siembra una :class:`FingerprintDB` desde el dataset de ejemplo incluido.
 
-This is REAL and runnable: it loads ``data/datasets/sample_attacks.json`` and
-populates a fingerprint database, embedding each canonical attack. Reworded
-``variants`` are then merged to demonstrate mutation collapsing.
+Real y ejecutable: carga ``data/datasets/sample_attacks.json``, puebla una base
+de huellas embebiendo cada ataque canónico, y luego fusiona las ``variants``
+reformuladas para demostrar el colapso de mutaciones.
 
-For large-scale seeding from public corpora, see :mod:`data.download` (stubbed).
+Para siembra a gran escala desde corpus públicos, ver :mod:`data.download` (stub).
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ SAMPLE_PATH = Path(__file__).parent / "datasets" / "sample_attacks.json"
 
 
 def load_sample(path: Path = SAMPLE_PATH) -> dict:
-    """Load the bundled sample attack dataset."""
+    """Carga el dataset de ataques de ejemplo incluido."""
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -30,16 +30,16 @@ def seed_db(
     merge_variants: bool = True,
     path: Path = SAMPLE_PATH,
 ) -> FingerprintDB:
-    """Populate (and return) a fingerprint database from the sample dataset.
+    """Puebla (y devuelve) una base de huellas desde el dataset de ejemplo.
 
     Args:
-        db: an existing database to seed; a new one is created if omitted.
-        merge_variants: also feed each attack's reworded ``variants`` through
-            :meth:`FingerprintDB.add_or_merge` to demonstrate mutation merging.
-        path: dataset path override.
+        db: base existente a sembrar; se crea una nueva si se omite.
+        merge_variants: pasar también las ``variants`` reformuladas por
+            :meth:`FingerprintDB.add_or_merge` para demostrar la fusión.
+        path: ruta alternativa del dataset.
     """
-    # NB: use an explicit None check — FingerprintDB defines __len__, so an empty
-    # DB is falsy and `db or FingerprintDB()` would silently discard it.
+    # NB: comprobación explícita de None — FingerprintDB define __len__, así que
+    # una base vacía es falsy y `db or FingerprintDB()` la descartaría en silencio.
     if db is None:
         db = FingerprintDB()
     data = load_sample(path)
@@ -64,8 +64,8 @@ def seed_db(
 
 if __name__ == "__main__":
     seeded = seed_db()
-    print(f"Seeded fingerprint DB with {len(seeded)} distinct threats "
-          f"(variants merged as mutations).")
+    print(f"Base sembrada con {len(seeded)} amenazas distintas "
+          f"(variantes fusionadas como mutaciones).")
     for t in seeded.all_threats():
-        print(f"  - [{t.category.value}] reports={t.times_reported} "
-              f"aliases={len(t.aliases)} :: {t.text[:60]!r}")
+        print(f"  - [{t.category.value}] reportes={t.times_reported} "
+              f"alias={len(t.aliases)} :: {t.text[:60]!r}")

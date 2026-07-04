@@ -1,13 +1,9 @@
-"""Reference taxonomies used by ARGOS.
+"""Taxonomías de referencia de ARGOS.
 
-Currently the primary taxonomy is the **OWASP MCP Top 10**, the community list
-of the most critical risks for Model Context Protocol servers. The entries below
-are ARGOS's working representation of that list.
-
-NOTE ON PROVENANCE: the OWASP MCP Top 10 is an evolving community effort. The ids
-and titles here reflect ARGOS's snapshot and are used as stable internal
-references. Treat wording as ARGOS-authored summaries, and re-sync against the
-upstream project as it stabilizes (tracked in ROADMAP.md).
+La principal es el **OWASP MCP Top 10**, la lista comunitaria de los riesgos más
+críticos para servidores MCP. Las entradas de abajo son la representación de
+trabajo de ARGOS; el texto es un resumen propio, a re-sincronizar con el proyecto
+upstream a medida que se estabilice (ver ROADMAP.md).
 """
 
 from __future__ import annotations
@@ -19,9 +15,9 @@ from argos.core.models import Severity, ThreatCategory
 
 @dataclass(frozen=True)
 class OwaspMcpRisk:
-    """One entry of the OWASP MCP Top 10 catalog."""
+    """Una entrada del catálogo OWASP MCP Top 10."""
 
-    id: str  # e.g. "MCP01"
+    id: str  # p.ej. "MCP01"
     title: str
     description: str
     default_severity: Severity
@@ -34,9 +30,9 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP01",
         title="Prompt / Tool Description Injection",
         description=(
-            "Malicious instructions hidden in tool descriptions, prompt "
-            "templates or resource content that hijack the host LLM when the "
-            "component is loaded ('tool poisoning')."
+            "Instrucciones maliciosas ocultas en descripciones de herramientas, "
+            "plantillas de prompt o contenido de recursos que secuestran el LLM "
+            "anfitrión al cargar el componente ('tool poisoning')."
         ),
         default_severity=Severity.HIGH,
         category=ThreatCategory.TOOL_POISONING,
@@ -45,8 +41,9 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP02",
         title="Excessive Tool Permissions / Overbroad Scope",
         description=(
-            "Tools requesting broad filesystem, network or shell access beyond "
-            "what their stated purpose requires, enabling privilege abuse."
+            "Herramientas que piden acceso amplio a sistema de ficheros, red o "
+            "shell más allá de lo que su propósito requiere, permitiendo abuso "
+            "de privilegios."
         ),
         default_severity=Severity.HIGH,
         category=ThreatCategory.EXCESSIVE_PERMISSIONS,
@@ -55,8 +52,8 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP03",
         title="Sensitive Data Exposure via Resources",
         description=(
-            "Resources exposing secrets, credentials or PII (e.g. .env files, "
-            "private keys, tokens) to the connected agent."
+            "Recursos que exponen secretos, credenciales o PII (p.ej. ficheros "
+            ".env, claves privadas, tokens) al agente conectado."
         ),
         default_severity=Severity.CRITICAL,
         category=ThreatCategory.DATA_EXFILTRATION,
@@ -65,8 +62,8 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP04",
         title="Command / Code Injection in Tool Handlers",
         description=(
-            "Tool implementations that pass agent-controlled arguments into "
-            "shells, eval or SQL without sanitization."
+            "Implementaciones de herramientas que pasan argumentos controlados "
+            "por el agente a shells, eval o SQL sin sanear."
         ),
         default_severity=Severity.CRITICAL,
         category=ThreatCategory.INSECURE_CONFIG,
@@ -75,8 +72,8 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP05",
         title="Unauthenticated / Weakly Authenticated Server",
         description=(
-            "MCP endpoints exposed without authentication or with weak/shared "
-            "secrets, allowing untrusted clients to invoke privileged tools."
+            "Endpoints MCP expuestos sin autenticación o con secretos débiles/"
+            "compartidos, permitiendo a clientes no confiables invocar herramientas."
         ),
         default_severity=Severity.HIGH,
         category=ThreatCategory.INSECURE_CONFIG,
@@ -85,8 +82,8 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP06",
         title="Supply-Chain / Rug-Pull of Server Definitions",
         description=(
-            "Server or tool definitions that change behavior after install "
-            "('rug pull'), or that pull unpinned/untrusted dependencies."
+            "Definiciones de servidor o herramienta que cambian de comportamiento "
+            "tras la instalación ('rug pull'), o con dependencias no fijadas."
         ),
         default_severity=Severity.HIGH,
         category=ThreatCategory.SUPPLY_CHAIN,
@@ -95,8 +92,8 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP07",
         title="Cross-Server / Confused-Deputy Tool Shadowing",
         description=(
-            "A malicious server overriding or shadowing tools from a trusted "
-            "server to intercept calls or exfiltrate arguments."
+            "Un servidor malicioso que sobrescribe o eclipsa herramientas de un "
+            "servidor confiable para interceptar llamadas o exfiltrar argumentos."
         ),
         default_severity=Severity.HIGH,
         category=ThreatCategory.TOOL_POISONING,
@@ -105,8 +102,8 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP08",
         title="Insecure Output / Response Injection",
         description=(
-            "Tool outputs containing crafted content that manipulate the host "
-            "agent's downstream reasoning or actions (indirect prompt injection)."
+            "Salidas de herramientas con contenido manipulado que altera el "
+            "razonamiento o las acciones del agente (inyección indirecta)."
         ),
         default_severity=Severity.MEDIUM,
         category=ThreatCategory.PROMPT_INJECTION,
@@ -115,8 +112,8 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP09",
         title="Insufficient Logging & Observability",
         description=(
-            "No audit trail of tool invocations and arguments, preventing "
-            "detection and forensic analysis of abuse."
+            "Sin traza de auditoría de invocaciones y argumentos, impidiendo "
+            "detectar y analizar forensemente el abuso."
         ),
         default_severity=Severity.MEDIUM,
         category=ThreatCategory.INSECURE_CONFIG,
@@ -125,21 +122,21 @@ OWASP_MCP_TOP_10: list[OwaspMcpRisk] = [
         id="MCP10",
         title="Insecure Transport / Configuration",
         description=(
-            "Plaintext transport, permissive CORS, or dangerous default "
-            "configuration exposing the server to interception or abuse."
+            "Transporte en claro, CORS permisivo o configuración por defecto "
+            "peligrosa que expone el servidor a interceptación o abuso."
         ),
         default_severity=Severity.MEDIUM,
         category=ThreatCategory.INSECURE_CONFIG,
     ),
 ]
 
-# Convenience index: id -> risk entry.
+# Índice de conveniencia: id -> entrada de riesgo.
 OWASP_MCP_BY_ID: dict[str, OwaspMcpRisk] = {r.id: r for r in OWASP_MCP_TOP_10}
 
 
 def get_owasp_risk(owasp_id: str) -> OwaspMcpRisk:
-    """Return the OWASP MCP risk entry for ``owasp_id`` (e.g. ``"MCP01"``)."""
+    """Devuelve la entrada OWASP MCP de ``owasp_id`` (p.ej. ``"MCP01"``)."""
     try:
         return OWASP_MCP_BY_ID[owasp_id]
-    except KeyError as exc:  # pragma: no cover - defensive
-        raise KeyError(f"Unknown OWASP MCP id: {owasp_id!r}") from exc
+    except KeyError as exc:  # pragma: no cover - defensivo
+        raise KeyError(f"Id OWASP MCP desconocido: {owasp_id!r}") from exc

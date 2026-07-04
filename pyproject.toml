@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "argos"
 version = "0.1.0"
-description = "Collaborative reputation & threat intelligence for the AI agent ecosystem (MCP servers & LLMs)."
+description = "Reputación e inteligencia de amenazas para el ecosistema de agentes de IA (servidores MCP y LLMs)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "TBD" }
 authors = [{ name = "ARGOS Team" }]
 
-# Runtime deps are listed in requirements.txt for this early-stage repo.
-# They are mirrored here loosely so `pip install -e .` works too.
+# Las deps de ejecución están en requirements.txt; se reflejan aquí de forma laxa
+# para que `pip install -e .` también funcione.
 dependencies = [
     "pydantic>=2.6,<3",
     "fastapi>=0.110",

@@ -1,6 +1,6 @@
 {
-  "catalog": "OWASP MCP Top 10 (ARGOS working snapshot)",
-  "note": "Human-readable mirror of argos.core.taxonomies.OWASP_MCP_TOP_10. The Python module is the source of truth used at runtime; this file exists for documentation and for reseeding. Re-sync as the upstream OWASP MCP list stabilizes.",
+  "catalog": "OWASP MCP Top 10 (snapshot de trabajo de ARGOS)",
+  "note": "Espejo legible de argos.core.taxonomies.OWASP_MCP_TOP_10. El módulo Python es la fuente de verdad en runtime; este fichero es para documentación y re-siembra. Re-sincronizar cuando el OWASP MCP upstream se estabilice.",
   "risks": [
     {"id": "MCP01", "title": "Prompt / Tool Description Injection", "default_severity": "high"},
     {"id": "MCP02", "title": "Excessive Tool Permissions / Overbroad Scope", "default_severity": "high"},

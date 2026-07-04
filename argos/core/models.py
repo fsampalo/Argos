@@ -1,12 +1,8 @@
-"""Common data models for ARGOS.
+"""Modelos de datos comunes de ARGOS.
 
-These Pydantic models are the lingua franca shared by every subpackage: the
-component analyzer produces :class:`RiskReport`, the interaction analyzer and the
-fingerprint database exchange :class:`Threat` and :class:`Fingerprint`, and the
-API serializes all of them.
-
-The models are intentionally implementation-light: they describe *what* a threat
-or report looks like, not *how* it is produced.
+Son el lenguaje compartido por todos los subpaquetes: el component analyzer
+produce :class:`RiskReport`; el interaction analyzer y la base de huellas
+intercambian :class:`Threat` y :class:`Fingerprint`; la API los serializa todos.
 """
 
 from __future__ import annotations
@@ -21,7 +17,7 @@ from pydantic import BaseModel, Field
 
 
 def _utcnow() -> datetime:
-    """Timezone-aware UTC timestamp (avoids the deprecated naive ``utcnow``)."""
+    """Marca de tiempo UTC con zona (evita el ``utcnow`` naive obsoleto)."""
     return datetime.now(timezone.utc)
 
 
@@ -30,7 +26,7 @@ def _new_id() -> str:
 
 
 class Severity(str, Enum):
-    """Normalized severity scale used across findings and threats."""
+    """Escala de severidad normalizada usada en hallazgos y amenazas."""
 
     INFO = "info"
     LOW = "low"
@@ -40,7 +36,7 @@ class Severity(str, Enum):
 
     @property
     def score(self) -> float:
-        """Numeric weight in the range [0, 1] used for aggregate risk scoring."""
+        """Peso numérico en [0, 1] para el scoring agregado de riesgo."""
         return {
             Severity.INFO: 0.0,
             Severity.LOW: 0.25,
@@ -51,11 +47,7 @@ class Severity(str, Enum):
 
 
 class ThreatCategory(str, Enum):
-    """High-level taxonomy of threats ARGOS reasons about.
-
-    Kept deliberately small and stable; finer-grained references (e.g. the
-    specific OWASP MCP risk id) live as metadata on the individual objects.
-    """
+    """Taxonomía de alto nivel de las amenazas que ARGOS maneja."""
 
     PROMPT_INJECTION = "prompt_injection"
     JAILBREAK = "jailbreak"
@@ -68,19 +60,18 @@ class ThreatCategory(str, Enum):
 
 
 # --------------------------------------------------------------------------- #
-# MCP component inventory models
+# Inventario de componentes MCP
 # --------------------------------------------------------------------------- #
 class MCPTool(BaseModel):
-    """A single tool exposed by an MCP server."""
+    """Una herramienta expuesta por un servidor MCP."""
 
     name: str
     description: str = ""
-    # JSON schema of the tool's input parameters, as advertised by the server.
-    input_schema: dict = Field(default_factory=dict)
+    input_schema: dict = Field(default_factory=dict)  # JSON schema de los parámetros
 
 
 class MCPPrompt(BaseModel):
-    """A prompt template exposed by an MCP server."""
+    """Una plantilla de prompt expuesta por un servidor MCP."""
 
     name: str
     description: str = ""
@@ -88,7 +79,7 @@ class MCPPrompt(BaseModel):
 
 
 class MCPResource(BaseModel):
-    """A resource (file, URI, blob) exposed by an MCP server."""
+    """Un recurso (fichero, URI, blob) expuesto por un servidor MCP."""
 
     uri: str
     name: str = ""
@@ -96,10 +87,9 @@ class MCPResource(BaseModel):
 
 
 class ComponentInventory(BaseModel):
-    """Structured inventory of everything an MCP server exposes.
+    """Inventario estructurado de todo lo que expone un servidor MCP.
 
-    Produced by :mod:`argos.component_analyzer` and consumed by the OWASP
-    risk-scoring rules.
+    Lo produce :mod:`argos.component_analyzer` y lo consumen las reglas OWASP.
     """
 
     server_name: str
@@ -111,42 +101,39 @@ class ComponentInventory(BaseModel):
 
 
 # --------------------------------------------------------------------------- #
-# Risk reporting models
+# Informes de riesgo
 # --------------------------------------------------------------------------- #
 class RiskFinding(BaseModel):
-    """A single risk observation tied to an OWASP MCP category."""
+    """Un hallazgo de riesgo ligado a una categoría OWASP MCP."""
 
-    owasp_id: str  # e.g. "MCP01"
+    owasp_id: str  # p.ej. "MCP01"
     title: str
     severity: Severity
     description: str
-    # Free-form evidence: which tool/prompt/resource triggered the finding.
-    evidence: dict = Field(default_factory=dict)
+    evidence: dict = Field(default_factory=dict)  # qué tool/prompt/recurso lo disparó
     recommendation: str = ""
 
 
 class RiskReport(BaseModel):
-    """Aggregated risk assessment for an analyzed component."""
+    """Evaluación de riesgo agregada de un componente analizado."""
 
     report_id: str = Field(default_factory=_new_id)
     server_name: str
     findings: list[RiskFinding] = Field(default_factory=list)
-    # 0-100 aggregate risk score (higher = riskier). Computed from findings.
-    risk_score: float = 0.0
+    risk_score: float = 0.0  # 0-100 agregado (más alto = más riesgo)
     created_at: datetime = Field(default_factory=_utcnow)
 
     def compute_score(self) -> float:
-        """Recompute and store the aggregate risk score from current findings.
+        """Recalcula y guarda la puntuación agregada a partir de los hallazgos.
 
-        The score is a normalized, saturating aggregation of finding severities:
-        many low findings never fully mask a single critical one. This is a
-        transparent heuristic, not a calibrated model — see the README.
+        Agregación saturante: muchos hallazgos leves nunca enmascaran del todo
+        uno crítico. Es una heurística transparente, no un modelo calibrado.
         """
         if not self.findings:
             self.risk_score = 0.0
             return self.risk_score
 
-        # Saturating aggregation: 1 - Π(1 - severity_i), scaled to 0..100.
+        # 1 - Π(1 - severity_i), escalado a 0..100.
         product = 1.0
         for finding in self.findings:
             product *= 1.0 - finding.severity.score
@@ -155,53 +142,45 @@ class RiskReport(BaseModel):
 
 
 # --------------------------------------------------------------------------- #
-# Threat & fingerprint models (the differentiator)
+# Amenazas y huellas (el diferenciador)
 # --------------------------------------------------------------------------- #
 class Fingerprint(BaseModel):
-    """A semantic fingerprint of a threat.
+    """Huella semántica de una amenaza: vector de embedding + metadatos.
 
-    The fingerprint is an embedding vector plus enough metadata to compare,
-    deduplicate and cluster threats. Two attacks that *say the same thing with
-    different words* should have near-identical fingerprints (high cosine
-    similarity) — that is ARGOS's core differentiator.
+    Dos ataques que *dicen lo mismo con otras palabras* deben tener huellas casi
+    idénticas (alta similitud de coseno). Ese es el diferenciador de ARGOS.
     """
 
     fingerprint_id: str = Field(default_factory=_new_id)
-    # The embedding vector. Stored as a plain list for JSON-friendliness.
     vector: list[float]
-    # Name/id of the embedding model that produced the vector, so we never
-    # compare vectors from incompatible embedding spaces.
-    model: str
+    model: str  # modelo que generó el vector; evita comparar espacios incompatibles
     dim: int = 0
 
     def model_post_init(self, __context: object) -> None:  # noqa: D401
-        # Keep ``dim`` consistent with the actual vector length.
+        # Mantener ``dim`` coherente con la longitud real del vector.
         object.__setattr__(self, "dim", len(self.vector))
 
 
 class Threat(BaseModel):
-    """A known threat: the raw attack text plus its semantic fingerprint.
+    """Amenaza conocida: el texto del ataque más su huella semántica.
 
-    A ``Threat`` is the unit stored in the global fingerprint database. Multiple
-    reworded variants of the same underlying attack are expected to collapse to
-    the same threat via fingerprint similarity (mutation detection).
+    Es la unidad almacenada en la base global. Variantes reformuladas del mismo
+    ataque deben colapsar en la misma amenaza por similitud de huellas.
     """
 
     threat_id: str = Field(default_factory=_new_id)
-    # The canonical/representative attack text.
-    text: str
+    text: str  # texto canónico/representativo del ataque
     category: ThreatCategory = ThreatCategory.OTHER
     severity: Severity = Severity.MEDIUM
-    source: str = "unknown"  # dataset name, submitter, CVE id, etc.
+    source: str = "unknown"  # dataset, autor, id de CVE, etc.
     fingerprint: Optional[Fingerprint] = None
-    # Reputation counters aggregated from community contributions.
+    # Contadores de reputación agregados de las aportaciones de la comunidad.
     times_reported: int = 1
     first_seen: datetime = Field(default_factory=_utcnow)
     last_seen: datetime = Field(default_factory=_utcnow)
-    # Known reworded variants recognized as the same threat.
-    aliases: list[str] = Field(default_factory=list)
+    aliases: list[str] = Field(default_factory=list)  # variantes reconocidas
 
     @property
     def content_hash(self) -> str:
-        """Stable hash of the raw text (exact-duplicate detection, not semantic)."""
+        """Hash estable del texto (duplicado exacto, no semántico)."""
         return hashlib.sha256(self.text.strip().lower().encode("utf-8")).hexdigest()

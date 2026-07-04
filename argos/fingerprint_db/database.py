@@ -1,19 +1,20 @@
-"""The ARGOS Fingerprint Database — the project's core differentiator.
+"""Base de huellas de ARGOS — el diferenciador del proyecto.
 
-Where existing MCP/guardrail tools ask *"is this string malicious?"*, ARGOS asks
-*"is this the same underlying threat we've seen before, even reworded?"*.
+Donde las herramientas MCP/guardrail existentes preguntan *"¿es maliciosa esta
+cadena?"*, ARGOS pregunta *"¿es la misma amenaza subyacente que ya vimos, aunque
+esté reformulada?"*.
 
-The database stores :class:`~argos.core.models.Threat` objects, each carrying a
-semantic :class:`~argos.core.models.Fingerprint`. Given a new attack, it:
+La base almacena :class:`~argos.core.models.Threat`, cada uno con su
+:class:`~argos.core.models.Fingerprint` semántica. Dado un ataque nuevo:
 
-1. Embeds it into the same semantic space.
-2. Compares it against every stored fingerprint via **cosine similarity**.
-3. If the best match exceeds a threshold, it reports a *mutation* of a known
-   threat (and bumps that threat's reputation) instead of a brand-new one.
+1. Lo embebe en el mismo espacio semántico.
+2. Lo compara con cada huella almacenada por **similitud de coseno**.
+3. Si el mejor match supera el umbral, lo reporta como *mutación* de una amenaza
+   conocida (y sube su reputación) en vez de como algo nuevo.
 
-This module is implemented for real. The in-memory store is intentionally simple;
-swapping in a vector database (FAISS/Qdrant/pgvector) is a Phase-2 task tracked in
-ROADMAP.md and does not change this public API.
+Implementado de verdad. El almacén en memoria es intencionadamente simple;
+cambiarlo por una vector DB (FAISS/Qdrant/pgvector) es tarea de Fase 2 y no
+altera esta API pública.
 """
 
 from __future__ import annotations
@@ -28,21 +29,21 @@ from typing import Optional, Sequence
 from argos.core.models import Fingerprint, Severity, Threat, ThreatCategory
 from argos.fingerprint_db.embeddings import Embedder, get_default_embedder
 
-# Default cosine-similarity threshold above which two texts are considered the
-# same underlying threat. Tuned informally on the sample dataset; calibrating
-# this against a labeled corpus is a roadmap item.
+# Umbral de coseno por encima del cual dos textos se consideran la misma amenaza.
+# Ajustado informalmente sobre el dataset de ejemplo; calibrarlo contra un corpus
+# etiquetado es tarea del roadmap.
 DEFAULT_MUTATION_THRESHOLD = 0.72
 
 
 def cosine_similarity(a: Sequence[float], b: Sequence[float]) -> float:
-    """Cosine similarity between two equal-length vectors, in ``[-1, 1]``.
+    """Similitud de coseno entre dos vectores de igual longitud, en ``[-1, 1]``.
 
     Raises:
-        ValueError: if the vectors have different dimensions.
+        ValueError: si los vectores tienen dimensiones distintas.
     """
     if len(a) != len(b):
         raise ValueError(
-            f"Cannot compare vectors of different dimensions: {len(a)} vs {len(b)}"
+            f"No se pueden comparar vectores de distinta dimensión: {len(a)} vs {len(b)}"
         )
     dot = sum(x * y for x, y in zip(a, b))
     norm_a = math.sqrt(sum(x * x for x in a))
@@ -54,7 +55,7 @@ def cosine_similarity(a: Sequence[float], b: Sequence[float]) -> float:
 
 @dataclass
 class MatchResult:
-    """Outcome of comparing a query against the database."""
+    """Resultado de comparar una consulta con la base."""
 
     is_known: bool
     similarity: float
@@ -62,17 +63,16 @@ class MatchResult:
 
     @property
     def is_mutation(self) -> bool:
-        """True when we matched a known threat below a perfect (exact) score."""
+        """True cuando hubo match conocido por debajo de una coincidencia exacta."""
         return self.is_known and self.similarity < 0.999
 
 
 class FingerprintDB:
-    """In-memory semantic threat database with mutation detection.
+    """Base semántica de amenazas en memoria, con detección de mutaciones.
 
     Args:
-        embedder: Embedding backend. Defaults to the real semantic backend.
-        threshold: Cosine-similarity cutoff for treating a query as a known
-            threat. Higher = stricter.
+        embedder: backend de embeddings. Por defecto el real semántico.
+        threshold: corte de coseno para tratar una consulta como amenaza conocida.
     """
 
     def __init__(
@@ -85,18 +85,17 @@ class FingerprintDB:
         self._threats: list[Threat] = []
 
     # ------------------------------------------------------------------ #
-    # Core operations
+    # Operaciones principales
     # ------------------------------------------------------------------ #
     def fingerprint_text(self, text: str) -> Fingerprint:
-        """Compute a semantic fingerprint for ``text`` using the active embedder."""
+        """Calcula la huella semántica de ``text`` con el embedder activo."""
         vector = self.embedder.embed(text)
         return Fingerprint(vector=vector, model=self.embedder.model_name)
 
     def query(self, text: str) -> MatchResult:
-        """Look up ``text`` against the database without modifying it.
+        """Busca ``text`` en la base sin modificarla.
 
-        Returns the best matching known threat if similarity clears the
-        threshold, otherwise an ``is_known=False`` result.
+        Devuelve la mejor amenaza conocida si la similitud supera el umbral.
         """
         fp = self.fingerprint_text(text)
         best_threat: Optional[Threat] = None
@@ -105,7 +104,7 @@ class FingerprintDB:
             if threat.fingerprint is None:
                 continue
             if threat.fingerprint.model != fp.model:
-                # Never compare across incompatible embedding spaces.
+                # Nunca comparar entre espacios de embedding incompatibles.
                 continue
             sim = cosine_similarity(fp.vector, threat.fingerprint.vector)
             if sim > best_sim:
@@ -124,15 +123,14 @@ class FingerprintDB:
         severity: Severity = Severity.MEDIUM,
         source: str = "unknown",
     ) -> tuple[Threat, MatchResult]:
-        """Add a threat, or merge it into an existing one if it's a mutation.
+        """Añade una amenaza, o la fusiona en una existente si es una mutación.
 
-        This is the write path that makes the database *collaborative*: reworded
-        resubmissions of a known attack increase that threat's reputation instead
-        of polluting the store with near-duplicates.
+        Es la ruta de escritura que hace la base *colaborativa*: reenvíos
+        reformulados de un ataque conocido suben su reputación en vez de generar
+        casi-duplicados.
 
         Returns:
-            A tuple of (the resulting stored threat, the match result that
-            produced the decision).
+            (amenaza resultante almacenada, match que motivó la decisión).
         """
         match = self.query(text)
         if match.is_known and match.threat is not None:
@@ -154,17 +152,17 @@ class FingerprintDB:
         return threat, match
 
     # ------------------------------------------------------------------ #
-    # Introspection & persistence
+    # Introspección y persistencia
     # ------------------------------------------------------------------ #
     def all_threats(self) -> list[Threat]:
-        """Return all stored threats (live references, not copies)."""
+        """Devuelve todas las amenazas almacenadas (referencias, no copias)."""
         return list(self._threats)
 
     def __len__(self) -> int:
         return len(self._threats)
 
     def save(self, path: str | Path) -> None:
-        """Persist the database to a JSON file (fingerprints included)."""
+        """Persiste la base en un fichero JSON (con las huellas incluidas)."""
         path = Path(path)
         payload = {
             "model": self.embedder.model_name,
@@ -174,11 +172,10 @@ class FingerprintDB:
         path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
     def load(self, path: str | Path) -> None:
-        """Load threats from a JSON file produced by :meth:`save`.
+        """Carga amenazas desde un JSON de :meth:`save`.
 
-        Note: this replaces the current in-memory threats. It does not re-embed;
-        it trusts the stored vectors, so ensure the embedder matches the model
-        recorded in the file.
+        Reemplaza las amenazas en memoria y no re-embebe: confía en los vectores
+        guardados, así que el embedder debe coincidir con el modelo del fichero.
         """
         path = Path(path)
         payload = json.loads(path.read_text(encoding="utf-8"))

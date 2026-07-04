@@ -1,4 +1,4 @@
-"""Static/dynamic analysis of MCP servers against the OWASP MCP Top 10."""
+"""Análisis estático/dinámico de servidores MCP frente al OWASP MCP Top 10."""
 
 from argos.component_analyzer.analyzer import (
     analyze_inventory,

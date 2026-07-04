@@ -1,20 +1,16 @@
-"""Prompt-injection / jailbreak detection via an open-source guardian model.
+"""Detección de inyección de prompt / jailbreak con un modelo guardián open source.
 
-ARGOS delegates the *is this interaction an attack?* question to a dedicated
-open-source classifier. The default is a DeBERTa-based prompt-injection detector
-published on the Hugging Face Hub (e.g. ``protectai/deberta-v3-base-prompt-injection-v2``).
+ARGOS delega la pregunta *¿es un ataque esta interacción?* a un clasificador open
+source dedicado. Por defecto, un detector de inyección basado en DeBERTa de
+Hugging Face (p.ej. ``protectai/deberta-v3-base-prompt-injection-v2``).
 
-Design:
-    * :class:`GuardianDetector` wraps the HF model behind a small, stable API
-      (:meth:`classify`) returning a :class:`DetectionResult`.
-    * Loading the model is the REAL integration point; it requires the optional
-      ``transformers``/``torch`` dependencies and a model download.
-    * :class:`HeuristicDetector` is a lightweight, dependency-free fallback used
-      when the model isn't available. It is explicitly marked as low-fidelity and
-      must not be mistaken for the guardian model.
+* :class:`GuardianDetector` envuelve el modelo HF tras una API estable
+  (:meth:`classify`) que devuelve un :class:`DetectionResult`.
+* :class:`HeuristicDetector` es un fallback ligero sin dependencias, de baja
+  fidelidad, marcado como tal. No confundir con el modelo guardián.
 
-Nothing here fabricates a verdict: if the model can't load, callers get a clear
-error or the clearly-labeled heuristic fallback — never a fake "clean" result.
+Nada aquí fabrica un veredicto: si el modelo no carga, quien llama recibe un error
+claro o el fallback heurístico etiquetado — nunca un falso "limpio".
 """
 
 from __future__ import annotations
@@ -30,39 +26,37 @@ DEFAULT_GUARDIAN_MODEL = "protectai/deberta-v3-base-prompt-injection-v2"
 
 @dataclass
 class DetectionResult:
-    """Verdict for a single interaction."""
+    """Veredicto para una interacción."""
 
     is_attack: bool
-    # Confidence in the "attack" label, in [0, 1].
-    confidence: float
+    confidence: float  # confianza en la etiqueta "ataque", en [0, 1]
     category: ThreatCategory
     severity: Severity
-    detector: str  # which backend produced this verdict
-    raw: dict  # backend-specific raw output, for transparency/debugging
+    detector: str  # qué backend produjo el veredicto
+    raw: dict  # salida cruda del backend, por transparencia
 
 
 class GuardianDetector:
-    """Wrapper around a Hugging Face prompt-injection classifier.
+    """Envoltorio del clasificador de inyección de prompt de Hugging Face.
 
-    The model is loaded lazily on first :meth:`classify` call.
+    El modelo se carga de forma perezosa en el primer :meth:`classify`.
     """
 
     def __init__(self, model_name: str = DEFAULT_GUARDIAN_MODEL) -> None:
         self.model_name = model_name
-        self._pipeline = None  # lazily initialized HF pipeline
+        self._pipeline = None  # pipeline HF con carga perezosa
 
     def _ensure_pipeline(self) -> None:
         if self._pipeline is not None:
             return
         try:
             from transformers import pipeline
-        except ImportError as exc:  # pragma: no cover - env dependent
+        except ImportError as exc:  # pragma: no cover - depende del entorno
             raise ImportError(
-                "GuardianDetector requires 'transformers' (and a backend such as "
-                "torch). Install with `pip install transformers torch`, or use "
-                "HeuristicDetector for a low-fidelity offline fallback."
+                "GuardianDetector requiere 'transformers' (y un backend como "
+                "torch). Instálalo con `pip install transformers torch`, o usa "
+                "HeuristicDetector como fallback offline de baja fidelidad."
             ) from exc
-        # text-classification pipeline over the DeBERTa prompt-injection model.
         self._pipeline = pipeline(
             "text-classification",
             model=self.model_name,
@@ -70,13 +64,13 @@ class GuardianDetector:
         )
 
     def classify(self, text: str) -> DetectionResult:
-        """Classify ``text`` as benign or a prompt-injection/jailbreak attempt.
+        """Clasifica ``text`` como benigno o intento de inyección/jailbreak.
 
         Raises:
-            ImportError: if the transformers backend is unavailable.
+            ImportError: si el backend transformers no está disponible.
         """
         self._ensure_pipeline()
-        output = self._pipeline(text)[0]  # e.g. {"label": "INJECTION", "score": 0.99}
+        output = self._pipeline(text)[0]  # p.ej. {"label": "INJECTION", "score": 0.99}
         label = str(output.get("label", "")).upper()
         score = float(output.get("score", 0.0))
         is_attack = label in {"INJECTION", "JAILBREAK", "LABEL_1", "UNSAFE"}
@@ -95,11 +89,11 @@ class GuardianDetector:
 
 
 class HeuristicDetector:
-    """Dependency-free, LOW-FIDELITY fallback prompt-injection detector.
+    """Fallback sin dependencias, de BAJA FIDELIDAD, para inyección de prompt.
 
-    Regex/keyword based. Intended only for offline smoke tests and demos where the
-    guardian model can't be downloaded. It will miss paraphrased and novel attacks
-    — do not rely on it for real protection.
+    Basado en regex/palabras clave. Solo para pruebas offline y demos donde el
+    modelo guardián no se pueda descargar. Se le escaparán ataques parafraseados
+    y novedosos: no confiar en él para protección real.
     """
 
     _PATTERNS = [
@@ -117,7 +111,7 @@ class HeuristicDetector:
     def classify(self, text: str) -> DetectionResult:
         matches = [p.pattern for p in self._PATTERNS if p.search(text or "")]
         is_attack = bool(matches)
-        # Crude confidence: more distinct pattern hits -> higher confidence.
+        # Confianza cruda: más patrones distintos -> más confianza.
         confidence = min(0.5 + 0.15 * len(matches), 0.95) if is_attack else 0.6
         return DetectionResult(
             is_attack=is_attack,
@@ -130,12 +124,11 @@ class HeuristicDetector:
 
 
 def get_detector(prefer_model: bool = True) -> "GuardianDetector | HeuristicDetector":
-    """Return a detector.
+    """Devuelve un detector.
 
     Args:
-        prefer_model: if True, return the real guardian model wrapper (which will
-            raise on ``classify`` if the dependency is missing). If False, return
-            the heuristic fallback.
+        prefer_model: si True, el guardián real (que lanzará en ``classify`` si
+            falta la dependencia). Si False, el fallback heurístico.
     """
     return GuardianDetector() if prefer_model else HeuristicDetector()
 
@@ -144,9 +137,6 @@ def analyze_interaction(
     text: str,
     detector: Optional["GuardianDetector | HeuristicDetector"] = None,
 ) -> DetectionResult:
-    """Convenience one-shot: classify a single interaction.
-
-    Uses the real guardian model by default.
-    """
+    """Atajo: clasifica una interacción. Usa el guardián real por defecto."""
     detector = detector or get_detector(prefer_model=True)
     return detector.classify(text)

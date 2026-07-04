@@ -1,9 +1,9 @@
-"""Tests for the fingerprint database.
+"""Tests de la base de huellas.
 
-Plumbing tests use the offline, dependency-free HashingEmbedder so CI needs no
-model download. The *semantic* mutation-detection test (the real differentiator)
-requires sentence-transformers and is skipped automatically when it isn't
-installed — it is never faked.
+Los tests de fontanería usan el HashingEmbedder offline y sin dependencias, para
+que CI no necesite descargar ningún modelo. El test *semántico* de detección de
+mutaciones (el diferenciador real) requiere sentence-transformers y se salta
+automáticamente si no está instalado — nunca se simula.
 """
 
 import math
@@ -57,7 +57,7 @@ def test_save_and_load_roundtrip(tmp_path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# The real differentiator: reworded attacks collapse to one threat.
+# El diferenciador real: ataques reformulados colapsan en una sola amenaza.
 # --------------------------------------------------------------------------- #
 def _has_sentence_transformers() -> bool:
     try:
@@ -69,10 +69,10 @@ def _has_sentence_transformers() -> bool:
 
 @pytest.mark.skipif(
     not _has_sentence_transformers(),
-    reason="sentence-transformers not installed; semantic test needs the real model",
+    reason="sentence-transformers no instalado; el test semántico necesita el modelo real",
 )
 def test_semantic_mutation_detection() -> None:
-    """Two reworded prompt-injections must be recognized as the same threat."""
+    """Dos inyecciones reformuladas deben reconocerse como la misma amenaza."""
     from argos.fingerprint_db.embeddings import SentenceTransformerEmbedder
 
     db = FingerprintDB(embedder=SentenceTransformerEmbedder())

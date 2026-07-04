@@ -1,1 +1,1 @@
-"""Datasets, reference catalogs and seeding utilities for ARGOS."""
+"""Datasets, catálogos de referencia y utilidades de siembra de ARGOS."""

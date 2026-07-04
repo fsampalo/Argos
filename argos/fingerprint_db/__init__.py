@@ -1,4 +1,4 @@
-"""Semantic threat fingerprints and mutation detection — ARGOS's differentiator."""
+"""Huellas semánticas de amenazas y detección de mutaciones — el diferenciador."""
 
 from argos.fingerprint_db.database import (
     DEFAULT_MUTATION_THRESHOLD,

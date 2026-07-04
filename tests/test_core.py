@@ -1,4 +1,4 @@
-"""Tests for core data models and risk scoring."""
+"""Tests de los modelos de datos y del scoring de riesgo."""
 
 from argos.core.models import (
     Fingerprint,

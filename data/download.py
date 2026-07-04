@@ -1,20 +1,19 @@
-"""STUBS for downloading public attack datasets and reference catalogs.
+"""STUBS para descargar datasets públicos de ataques y catálogos de referencia.
 
-ARGOS's data strategy is to bootstrap the global fingerprint database from
-existing public corpora of prompt-injection / jailbreak attacks, plus official
-vulnerability catalogs, and then grow it with community contributions.
+La estrategia de datos de ARGOS es arrancar la base global de huellas desde
+corpus públicos de ataques de inyección / jailbreak, más catálogos oficiales de
+vulnerabilidades, y hacerla crecer con aportaciones de la comunidad.
 
-The functions below are intentionally NOT implemented: they declare the intended
-data sources and interfaces so the plumbing is obvious, but each raises
-``NotImplementedError`` rather than silently returning empty or fake data.
-Implementing them (respecting each dataset's license and terms) is Phase-1 work
-in ROADMAP.md.
+Las funciones de abajo NO están implementadas a propósito: declaran las fuentes e
+interfaces previstas para que la fontanería quede clara, pero lanzan
+``NotImplementedError`` en vez de devolver datos vacíos o falsos en silencio.
+Implementarlas (respetando la licencia de cada dataset) es trabajo de Fase 1.
 
-Candidate public sources (verify licenses before ingesting):
-    * Prompt-injection / jailbreak datasets on the Hugging Face Hub
-      (e.g. deepset/prompt-injections, jailbreak collections).
-    * OWASP MCP Top 10 project materials.
-    * Public CVE feeds filtered for MCP-related entries (NVD API).
+Fuentes públicas candidatas (verificar licencias antes de ingerir):
+    * Datasets de inyección / jailbreak en Hugging Face Hub
+      (p.ej. deepset/prompt-injections, colecciones de jailbreak).
+    * Materiales del proyecto OWASP MCP Top 10.
+    * Feeds públicos de CVE filtrados por MCP (API de NVD).
 """
 
 from __future__ import annotations
@@ -27,41 +26,41 @@ CATALOGS_DIR = DATA_DIR / "catalogs"
 
 
 def download_prompt_injection_datasets(dest: Path = DATASETS_DIR) -> list[Path]:
-    """STUB — fetch public prompt-injection/jailbreak datasets from HF Hub.
+    """STUB — descargar datasets públicos de inyección/jailbreak de HF Hub.
 
-    Intended: use ``datasets.load_dataset(...)`` for each configured source,
-    normalize to ARGOS's ``{text, category, severity, source}`` schema, and write
-    JSONL files under ``dest``. Respect and record each dataset's license.
+    Previsto: usar ``datasets.load_dataset(...)`` para cada fuente, normalizar al
+    esquema ``{text, category, severity, source}`` de ARGOS y escribir JSONL en
+    ``dest``. Respetar y registrar la licencia de cada dataset.
     """
     raise NotImplementedError(
-        "Public dataset download is not implemented yet (Phase 1, ROADMAP.md). "
-        "A small offline sample lives at data/datasets/sample_attacks.json."
+        "La descarga de datasets públicos no está implementada aún (Fase 1). "
+        "Hay un pequeño ejemplo offline en data/datasets/sample_attacks.json."
     )
 
 
 def download_mcp_cve_feed(dest: Path = CATALOGS_DIR) -> Path:
-    """STUB — pull MCP-related CVEs from the NVD API into a local catalog.
+    """STUB — traer CVEs relacionados con MCP desde la API de NVD a un catálogo.
 
-    Intended: query the NVD 2.0 API, filter for MCP/agent-related entries, and
-    persist a normalized catalog for cross-referencing findings.
+    Previsto: consultar la API NVD 2.0, filtrar entradas MCP/agente y persistir un
+    catálogo normalizado para cruzar con los hallazgos.
     """
     raise NotImplementedError(
-        "MCP CVE feed ingestion is not implemented yet (Phase 1, ROADMAP.md)."
+        "La ingesta del feed de CVEs de MCP no está implementada aún (Fase 1)."
     )
 
 
 def refresh_owasp_mcp_catalog(dest: Path = CATALOGS_DIR) -> Path:
-    """STUB — re-sync the OWASP MCP Top 10 catalog from upstream.
+    """STUB — re-sincronizar el catálogo OWASP MCP Top 10 desde upstream.
 
-    Intended: fetch the latest OWASP MCP Top 10 definitions and reconcile them
-    with ``argos.core.taxonomies``. Until implemented, the bundled snapshot in
-    ``data/catalogs/owasp_mcp_top10.json`` and the Python module are authoritative.
+    Previsto: traer las últimas definiciones del OWASP MCP Top 10 y reconciliarlas
+    con ``argos.core.taxonomies``. Hasta entonces, el snapshot en
+    ``data/catalogs/owasp_mcp_top10.json`` y el módulo Python son la referencia.
     """
     raise NotImplementedError(
-        "OWASP MCP catalog refresh is not implemented yet (Phase 1, ROADMAP.md)."
+        "La actualización del catálogo OWASP MCP no está implementada aún (Fase 1)."
     )
 
 
 if __name__ == "__main__":
     print(__doc__)
-    print("All download functions are stubs. See ROADMAP.md, Phase 1.")
+    print("Todas las funciones de descarga son stubs. Ver ROADMAP.md, Fase 1.")

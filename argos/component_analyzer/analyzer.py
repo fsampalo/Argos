@@ -1,14 +1,14 @@
-"""Component analyzer: inventory an MCP server and score its risk.
+"""Component analyzer: inventaría un servidor MCP y puntúa su riesgo.
 
 Pipeline:
-    connect/inventory  ->  ComponentInventory  ->  OWASP heuristics  ->  RiskReport
+    conectar/inventariar -> ComponentInventory -> heurísticas OWASP -> RiskReport
 
-The **scoring** path (inventory -> findings -> report) is fully implemented and
-runs on any :class:`ComponentInventory`, including ones parsed from a static
-manifest. The **live connection** path (actually speaking the MCP protocol to a
-running server to enumerate its tools) is a STUB — it is the part that needs a
-real MCP client and a target server, so it is marked honestly and raises
-``NotImplementedError`` rather than returning fake data.
+La ruta de *scoring* (inventario -> hallazgos -> informe) está implementada y
+funciona con cualquier :class:`ComponentInventory`, incluido uno parseado de un
+manifiesto estático. La *conexión en vivo* (hablar MCP con un servidor en marcha
+para enumerar sus tools) es un STUB: es la parte que necesita un cliente MCP real
+y un servidor objetivo, así que lanza ``NotImplementedError`` en vez de devolver
+datos falsos.
 """
 
 from __future__ import annotations
@@ -18,10 +18,10 @@ from argos.core.models import ComponentInventory, RiskReport
 
 
 def analyze_inventory(inventory: ComponentInventory) -> RiskReport:
-    """Score an already-collected component inventory against OWASP MCP Top 10.
+    """Puntúa un inventario ya recolectado frente al OWASP MCP Top 10.
 
-    This is the real, runnable entry point: given a structured inventory it
-    returns a populated :class:`RiskReport` with findings and an aggregate score.
+    Punto de entrada real y ejecutable: devuelve un :class:`RiskReport` con
+    hallazgos y puntuación agregada.
     """
     findings = run_all_rules(inventory)
     report = RiskReport(server_name=inventory.server_name, findings=findings)
@@ -30,20 +30,20 @@ def analyze_inventory(inventory: ComponentInventory) -> RiskReport:
 
 
 def inventory_from_manifest(manifest: dict) -> ComponentInventory:
-    """Build a :class:`ComponentInventory` from a static MCP manifest dict.
+    """Construye un :class:`ComponentInventory` desde un manifiesto MCP estático.
 
-    Accepts a permissive, MCP-like manifest shape::
+    Acepta una forma permisiva, tipo MCP::
 
         {
           "name": "acme-mcp",
-          "url": "https://...",            # optional
+          "url": "https://...",            # opcional
           "tools":     [{"name", "description", "inputSchema"}],
           "prompts":   [{"name", "description", "template"}],
           "resources": [{"uri", "name", "mimeType"}]
         }
 
-    Unknown fields are ignored. This lets ARGOS analyze published manifests
-    without a live connection.
+    Los campos desconocidos se ignoran. Permite analizar manifiestos publicados
+    sin conexión en vivo.
     """
     from argos.core.models import MCPPrompt, MCPResource, MCPTool
 
@@ -78,27 +78,27 @@ def inventory_from_manifest(manifest: dict) -> ComponentInventory:
 
 
 def inventory_live_server(server_url: str) -> ComponentInventory:
-    """STUB — connect to a running MCP server and enumerate its capabilities.
+    """STUB — conectar a un servidor MCP en marcha y enumerar sus capacidades.
 
-    Intended behavior: open an MCP session to ``server_url`` (stdio or HTTP/SSE
-    transport), call ``tools/list``, ``prompts/list`` and ``resources/list``, and
-    assemble a :class:`ComponentInventory`.
+    Comportamiento previsto: abrir una sesión MCP con ``server_url`` (transporte
+    stdio o HTTP/SSE), llamar a ``tools/list``, ``prompts/list`` y
+    ``resources/list``, y montar un :class:`ComponentInventory`.
 
-    This requires a real MCP client and a live target, so it is not implemented
-    yet. See ROADMAP.md (Phase 2).
+    Requiere un cliente MCP real y un objetivo en vivo; sin implementar aún. Ver
+    ROADMAP.md (Fase 2).
     """
     raise NotImplementedError(
-        "Live MCP server inventory is not implemented yet. "
-        "Use inventory_from_manifest() with a static manifest for now. "
-        "Tracked in ROADMAP.md, Phase 2."
+        "El inventario de servidor MCP en vivo no está implementado aún. "
+        "Usa inventory_from_manifest() con un manifiesto estático por ahora. "
+        "Registrado en ROADMAP.md, Fase 2."
     )
 
 
 def analyze_live_server(server_url: str) -> RiskReport:
-    """STUB — end-to-end analysis of a live MCP server.
+    """STUB — análisis extremo a extremo de un servidor MCP en vivo.
 
-    Composes :func:`inventory_live_server` with :func:`analyze_inventory` once the
-    live connection path is implemented.
+    Compone :func:`inventory_live_server` con :func:`analyze_inventory` cuando la
+    conexión en vivo esté implementada.
     """
-    inventory = inventory_live_server(server_url)  # raises NotImplementedError
+    inventory = inventory_live_server(server_url)  # lanza NotImplementedError
     return analyze_inventory(inventory)

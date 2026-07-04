@@ -1,4 +1,4 @@
-"""Prompt-injection / jailbreak detection via an open-source guardian model."""
+"""Detección de inyección de prompt / jailbreak con un modelo guardián open source."""
 
 from argos.interaction_analyzer.detector import (
     DEFAULT_GUARDIAN_MODEL,

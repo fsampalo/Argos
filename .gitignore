@@ -26,7 +26,7 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# ML model / dataset caches (can be large — never commit)
+# Cachés de modelos/datasets ML (pueden ser grandes — nunca commitear)
 .cache/
 *.bin
 *.safetensors
@@ -35,7 +35,7 @@ data/catalogs/*_cve*.json
 !data/datasets/sample_attacks.json
 !data/catalogs/owasp_mcp_top10.json
 
-# Local ARGOS DB dumps
+# Volcados locales de la base de ARGOS
 *.argos.json
 fingerprints.json
 

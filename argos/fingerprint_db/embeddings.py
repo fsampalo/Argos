@@ -1,19 +1,18 @@
-"""Semantic embedding backends for threat fingerprints.
+"""Backends de embeddings semánticos para las huellas de amenazas.
 
-This module turns attack text into dense vectors whose geometry captures
-*meaning*, not surface form. That is what lets ARGOS recognize two reworded
-attacks as the same threat.
+Convierten el texto de un ataque en vectores densos cuya geometría captura el
+*significado*, no la forma superficial. Eso es lo que permite a ARGOS reconocer
+dos ataques reformulados como la misma amenaza.
 
-Two backends are provided:
+Dos backends:
 
-* :class:`SentenceTransformerEmbedder` — the real, semantic backend (default).
-  Uses a small open-source sentence-transformer model. Requires the optional
-  ``sentence-transformers`` dependency and downloads the model on first use.
-
-* :class:`HashingEmbedder` — a deterministic, dependency-free fallback that is
-  **NOT semantic**. It exists only so the codebase and tests can run in fully
-  offline CI. It will *not* recognize reworded attacks; the demo intentionally
-  refuses to use it. This is called out honestly rather than pretending it works.
+* :class:`SentenceTransformerEmbedder` — el backend real y semántico (por
+  defecto). Usa un modelo sentence-transformer open source. Requiere la
+  dependencia opcional ``sentence-transformers`` y descarga el modelo la primera
+  vez.
+* :class:`HashingEmbedder` — fallback determinista y sin dependencias, **NO
+  semántico**. Existe solo para poder correr código y tests totalmente offline.
+  No reconoce reformulaciones; la demo se niega a usarlo a propósito.
 """
 
 from __future__ import annotations
@@ -27,41 +26,42 @@ DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 class Embedder(ABC):
-    """Abstract embedding backend: maps text to a fixed-dimension vector."""
+    """Backend de embeddings: mapea texto a un vector de dimensión fija."""
 
-    #: Human-readable identifier of the underlying model. Stored on every
-    #: fingerprint so vectors from different spaces are never compared.
+    #: Identificador del modelo. Se guarda en cada huella para no comparar
+    #: nunca vectores de espacios distintos.
     model_name: str
 
     @abstractmethod
     def embed(self, text: str) -> list[float]:
-        """Return the embedding vector for a single string."""
+        """Devuelve el vector de embedding de una cadena."""
 
     def embed_batch(self, texts: Sequence[str]) -> list[list[float]]:
-        """Embed many strings. Backends may override for efficiency."""
+        """Embebe varias cadenas. Los backends pueden sobreescribir por eficiencia."""
         return [self.embed(t) for t in texts]
 
 
 class SentenceTransformerEmbedder(Embedder):
-    """Real semantic backend built on ``sentence-transformers``.
+    """Backend semántico real sobre ``sentence-transformers``.
 
-    The model is loaded lazily on first use so importing this module stays cheap.
+    El modelo se carga de forma perezosa en el primer uso.
     """
 
     def __init__(self, model_name: str = DEFAULT_MODEL) -> None:
         self.model_name = model_name
-        self._model = None  # lazily initialized
+        self._model = None  # carga perezosa
 
     def _ensure_model(self) -> None:
         if self._model is not None:
             return
         try:
             from sentence_transformers import SentenceTransformer
-        except ImportError as exc:  # pragma: no cover - env dependent
+        except ImportError as exc:  # pragma: no cover - depende del entorno
             raise ImportError(
-                "SentenceTransformerEmbedder requires the 'sentence-transformers' "
-                "package. Install it with `pip install sentence-transformers`, or "
-                "use HashingEmbedder for offline (non-semantic) smoke tests."
+                "SentenceTransformerEmbedder requiere el paquete "
+                "'sentence-transformers'. Instálalo con `pip install "
+                "sentence-transformers`, o usa HashingEmbedder para pruebas "
+                "offline (no semánticas)."
             ) from exc
         self._model = SentenceTransformer(self.model_name)
 
@@ -77,11 +77,11 @@ class SentenceTransformerEmbedder(Embedder):
 
 
 class HashingEmbedder(Embedder):
-    """Deterministic, offline, **non-semantic** fallback embedder.
+    """Fallback offline, determinista y **no semántico**.
 
-    Produces a normalized bag-of-hashed-tokens vector. Useful only to exercise
-    the plumbing (storage, cosine math, API wiring) without any model download.
-    It cannot detect rewording — do not use it for the mutation-detection demo.
+    Produce un vector normalizado de tokens hasheados. Sirve solo para ejercitar
+    la fontanería (almacenamiento, coseno, API) sin descargar ningún modelo. No
+    detecta reformulaciones: no usar para la demo de mutaciones.
     """
 
     def __init__(self, dim: int = 256) -> None:
@@ -101,5 +101,5 @@ class HashingEmbedder(Embedder):
 
 
 def get_default_embedder() -> Embedder:
-    """Return the default (real, semantic) embedder."""
+    """Devuelve el embedder por defecto (real, semántico)."""
     return SentenceTransformerEmbedder()

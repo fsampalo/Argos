@@ -1,4 +1,4 @@
-"""Tests for the MCP component analyzer (fully offline)."""
+"""Tests del analizador de componentes MCP (totalmente offline)."""
 
 import pytest
 
