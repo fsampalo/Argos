@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ML model / dataset caches (can be large — never commit)
+.cache/
+*.bin
+*.safetensors
+data/datasets/*.jsonl
+data/catalogs/*_cve*.json
+!data/datasets/sample_attacks.json
+!data/catalogs/owasp_mcp_top10.json
+
+# Local ARGOS DB dumps
+*.argos.json
+fingerprints.json
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.*

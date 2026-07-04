@@ -1,0 +1,16 @@
+{
+  "catalog": "OWASP MCP Top 10 (ARGOS working snapshot)",
+  "note": "Human-readable mirror of argos.core.taxonomies.OWASP_MCP_TOP_10. The Python module is the source of truth used at runtime; this file exists for documentation and for reseeding. Re-sync as the upstream OWASP MCP list stabilizes.",
+  "risks": [
+    {"id": "MCP01", "title": "Prompt / Tool Description Injection", "default_severity": "high"},
+    {"id": "MCP02", "title": "Excessive Tool Permissions / Overbroad Scope", "default_severity": "high"},
+    {"id": "MCP03", "title": "Sensitive Data Exposure via Resources", "default_severity": "critical"},
+    {"id": "MCP04", "title": "Command / Code Injection in Tool Handlers", "default_severity": "critical"},
+    {"id": "MCP05", "title": "Unauthenticated / Weakly Authenticated Server", "default_severity": "high"},
+    {"id": "MCP06", "title": "Supply-Chain / Rug-Pull of Server Definitions", "default_severity": "high"},
+    {"id": "MCP07", "title": "Cross-Server / Confused-Deputy Tool Shadowing", "default_severity": "high"},
+    {"id": "MCP08", "title": "Insecure Output / Response Injection", "default_severity": "medium"},
+    {"id": "MCP09", "title": "Insufficient Logging & Observability", "default_severity": "medium"},
+    {"id": "MCP10", "title": "Insecure Transport / Configuration", "default_severity": "medium"}
+  ]
+}
