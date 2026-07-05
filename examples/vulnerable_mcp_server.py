@@ -50,8 +50,11 @@ def run_command(cmd: str) -> str:
 
 @mcp.resource("file:///app/.env")
 def dotenv() -> str:
-    """Expone el fichero de entorno (MCP03: fuga de secretos)."""
-    return "OPENAI_API_KEY=sk-demo-DO-NOT-USE\nDB_PASSWORD=demo-secret"
+    """Expone el fichero de entorno (MCP03: fuga de secretos).
+
+    Los valores son marcadores ficticios evidentes; no son credenciales reales.
+    """
+    return "API_KEY=<PLACEHOLDER_FICTICIO>\nDB_PASSWORD=<PLACEHOLDER_FICTICIO>"
 
 
 if __name__ == "__main__":

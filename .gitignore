@@ -39,6 +39,14 @@ data/catalogs/*_cve*.json
 *.argos.json
 fingerprints.json
 
+# Informes generados por las demos (regenerables; pueden llevar rutas locales)
+demo_report.txt
+demo_report.csv
+mcp_report.txt
+
+# Logs locales (uvicorn, etc.)
+*.log
+
 # IDE / OS
 .vscode/
 .idea/
