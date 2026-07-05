@@ -83,11 +83,14 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-> La demo descarga un modelo de embeddings pequeño (~80 MB) la primera vez.
+> La demo descarga un modelo de embeddings multilingüe (~1 GB) la primera vez.
 
 ## Cómo ejecutarlo
 
-**Demo del diferenciador** (reconoce un ataque reformulado como la misma amenaza):
+**Demo del diferenciador** — coge 5 ataques conocidos con 2-3 variantes
+parafraseadas cada uno (algunas en otro idioma), y muestra en una tabla que cada
+variante sigue matcheando con su ataque original por similitud de coseno, mientras
+que textos benignos no lo hacen:
 
 ```bash
 python demo.py

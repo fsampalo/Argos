@@ -22,7 +22,12 @@ import math
 from abc import ABC, abstractmethod
 from typing import Sequence
 
-DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+# Modelo multilingüe: reconoce paráfrasis dentro de un idioma y también entre
+# idiomas (un ataque traducido sigue siendo la misma amenaza). ~1 GB; captura
+# mejor la intención que el MiniLM y da similitudes más altas para paráfrasis
+# agresivas. Para entornos con poco espacio, MiniLM-L12-v2 es una alternativa
+# ligera (~120 MB) a costa de umbrales más bajos.
+DEFAULT_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 
 
 class Embedder(ABC):

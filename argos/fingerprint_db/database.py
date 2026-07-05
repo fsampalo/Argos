@@ -30,9 +30,11 @@ from argos.core.models import Fingerprint, Severity, Threat, ThreatCategory
 from argos.fingerprint_db.embeddings import Embedder, get_default_embedder
 
 # Umbral de coseno por encima del cual dos textos se consideran la misma amenaza.
-# Ajustado informalmente sobre el dataset de ejemplo; calibrarlo contra un corpus
-# etiquetado es tarea del roadmap.
-DEFAULT_MUTATION_THRESHOLD = 0.72
+# Calibrado sobre el dataset de ejemplo con el modelo multilingüe por defecto: las
+# paráfrasis reales quedan en ~0.39-0.86 y los textos benignos en ~0.09-0.21, así
+# que 0.35 separa ambas clases con margen. Recalibrarlo contra un corpus etiquetado
+# mayor es tarea del roadmap (el valor óptimo depende del modelo de embeddings).
+DEFAULT_MUTATION_THRESHOLD = 0.35
 
 
 def cosine_similarity(a: Sequence[float], b: Sequence[float]) -> float:
