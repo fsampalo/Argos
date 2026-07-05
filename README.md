@@ -64,49 +64,59 @@ Nada está simulado. Los stubs lanzan `NotImplementedError`.
 | `core` (modelos, taxonomías) | ✅ Real y testeado |
 | `fingerprint_db` (huellas + mutaciones) | ✅ **Real — el diferenciador** (almacén en memoria) |
 | `component_analyzer` (scoring de manifiesto) | 🟡 Heurísticas MCP01–MCP03; resto pendiente |
-| `component_analyzer` (conexión MCP en vivo) | ⛔ Stub |
+| `component_analyzer` (conexión MCP en vivo por stdio) | ✅ **Real** (SDK oficial `mcp`) |
 | `interaction_analyzer` (guardián) | 🟡 Wrapper real + fallback heurístico |
-| `api` (FastAPI) | ✅ Real |
+| `api` (FastAPI) + panel web | ✅ Real |
 | `data` (descarga de datasets públicos) | ⛔ Stub (hay un dataset de ejemplo real) |
 
 Plan completo de 8 semanas en `ROADMAP.md`.
 
 ---
 
-## Instalación
+## Instalación y ejecución rápida
 
-Requiere **Python 3.10+**.
+Requiere **Python 3.10+**. Un único script lo prepara y lanza todo:
+
+```bash
+# Windows (PowerShell)
+.\run.ps1 setup     # crea el venv e instala dependencias
+.\run.ps1 demo      # demo de huellas semánticas (mutaciones)
+.\run.ps1 mcp       # demo de análisis de un servidor MCP en vivo
+.\run.ps1 api       # panel web en http://127.0.0.1:8000
+.\run.ps1 all       # setup + tests + ambas demos
+
+# Linux / macOS
+./run.sh setup | demo | mcp | api | all
+```
+
+> La primera ejecución descarga un modelo de embeddings multilingüe (~1 GB) una
+> sola vez. `.\run.ps1` sin argumentos abre un menú interactivo.
+
+### Ejecución manual (equivalente)
 
 ```bash
 python -m venv .venv
 # Windows:  .venv\Scripts\Activate.ps1   |  Linux/macOS:  source .venv/bin/activate
 pip install -r requirements.txt
+
+python demo.py                          # 1) diferenciador: detección de mutaciones
+python demo_mcp.py                      # 2) análisis de un servidor MCP en vivo
+uvicorn argos.api.main:app --reload     # 3) panel web + API (http://127.0.0.1:8000)
 ```
 
-> La demo descarga un modelo de embeddings multilingüe (~1 GB) la primera vez.
+**1 · Demo del diferenciador** — coge 5 ataques conocidos con varias variantes
+parafraseadas (en 4 idiomas) y muestra en una tabla que cada variante sigue
+matcheando con su ataque original por similitud de coseno, mientras que textos
+benignos no lo hacen. Escribe `demo_report.txt` y `demo_report.csv`.
 
-## Cómo ejecutarlo
+**2 · Demo de MCP en vivo** — arranca un servidor MCP deliberadamente vulnerable
+(`examples/vulnerable_mcp_server.py`), se conecta por el protocolo MCP real,
+enumera sus tools/prompts/recursos y los evalúa frente al OWASP MCP Top 10.
+Escribe `mcp_report.txt`.
 
-**Demo del diferenciador** — coge 5 ataques conocidos con 2-3 variantes
-parafraseadas cada uno (algunas en otro idioma), y muestra en una tabla que cada
-variante sigue matcheando con su ataque original por similitud de coseno, mientras
-que textos benignos no lo hacen:
-
-```bash
-python demo.py
-```
-
-**API:**
-
-```bash
-uvicorn argos.api.main:app --reload    # docs en http://127.0.0.1:8000/docs
-```
-
-**Sembrar la base con el dataset de ejemplo:**
-
-```bash
-python -m data.seed
-```
+**3 · Panel web** — interfaz visual en `http://127.0.0.1:8000`: botón para analizar
+el servidor MCP en vivo (con medidor de riesgo y hallazgos por severidad) y un
+comprobador de reputación de prompts.
 
 **Tests** (corren offline; el test semántico se salta solo si falta el modelo):
 
@@ -122,12 +132,15 @@ pytest
 argos/
   core/                 modelos + taxonomías (real)
   fingerprint_db/       huellas + mutaciones (real ★)
-  component_analyzer/   inventario MCP + OWASP MCP (parcial)
+  component_analyzer/   inventario MCP (manifiesto + en vivo) + OWASP MCP
   interaction_analyzer/ guardián de inyección/jailbreak (parcial)
-  api/                  API REST FastAPI (real)
+  api/                  API REST FastAPI + panel web (real)
 data/                   dataset de ejemplo, catálogos y seeding
+examples/               servidor MCP vulnerable de demostración
 tests/                  suite pytest
-demo.py                 demo ejecutable del diferenciador
+demo.py                 demo del diferenciador (huellas / mutaciones)
+demo_mcp.py             demo de análisis de un servidor MCP en vivo
+run.ps1 / run.sh        lanzador todo-en-uno
 ```
 
 ---

@@ -8,6 +8,9 @@ pydantic>=2.6,<3
 fastapi>=0.110
 uvicorn[standard]>=0.27
 
+# --- Cliente MCP (análisis de servidores en vivo por stdio) ---
+mcp>=1.2
+
 # --- Base de huellas (embeddings semánticos — el diferenciador) ---
 # Arrastra torch como dependencia transitiva. Es la instalación más pesada y lo
 # que necesita la demo. La primera vez descarga un modelo pequeño (~80 MB).

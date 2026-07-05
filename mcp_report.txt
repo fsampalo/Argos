@@ -1,0 +1,41 @@
+
+==========================================================================
+ARGOS — Análisis de un servidor MCP EN VIVO
+==========================================================================
+Arrancando el servidor de demostración (vulnerable) y conectando por MCP...
+
+==========================================================================
+Servidor MCP analizado: acme-notes-mcp
+==========================================================================
+  Tools     : 3
+  Prompts   : 0
+  Recursos  : 1
+  Inventario recolectado EN VIVO por stdio (protocolo MCP real).
+
+==========================================================================
+Puntuación de riesgo: 100.0 / 100
+==========================================================================
+  3 hallazgo(s):
+
+  [ALTO]    MCP01  Prompt / Tool Description Injection
+            Contenido con aspecto de instrucción en una descripción o prompt del componente, señal típica de tool poisoning.
+            evidencia: {'location': 'tool:search_notes', 'matched': 'Ignore all previous instructions'}
+            recomendación: Revisar manualmente; tratar sus descripciones como entrada no confiable para el LLM anfitrión.
+
+  [ALTO]    MCP02  Excessive Tool Permissions / Overbroad Scope
+            La herramienta anuncia capacidades potencialmente peligrosas o excesivas.
+            evidencia: {'tool': 'run_command', 'terms': ['exec', 'shell', 'arbitrary']}
+            recomendación: Confirmar mínimo privilegio y aislar (sandbox) su ejecución.
+
+  [CRÍTICO] MCP03  Sensitive Data Exposure via Resources
+            El recurso expuesto coincide con un patrón asociado a secretos o credenciales.
+            evidencia: {'uri': 'file:///app/.env'}
+            recomendación: Eliminar material secreto de los recursos expuestos; nunca exponer .env/claves al agente.
+
+
+==========================================================================
+Veredicto
+==========================================================================
+[PASA]  ARGOS se conectó al servidor MCP en vivo, enumeró sus
+        capacidades y detectó las tres debilidades sembradas
+        (MCP01 inyección, MCP02 shell, MCP03 fuga de .env).

@@ -25,15 +25,26 @@ Estado
 
 from __future__ import annotations
 
+import sys
 from functools import lru_cache
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from argos.component_analyzer import analyze_inventory, inventory_from_manifest
+from argos.api.dashboard import DASHBOARD_HTML
+from argos.component_analyzer import (
+    analyze_inventory,
+    inventory_from_manifest,
+    inventory_live_server,
+)
 from argos.core.models import RiskReport, Severity, ThreatCategory
 from argos.fingerprint_db import FingerprintDB
 from argos.interaction_analyzer import DetectionResult, get_detector
+
+# Servidor MCP de demostración (vulnerable) que analiza POST /analyze/live.
+_DEMO_MCP_SERVER = Path(__file__).resolve().parents[2] / "examples" / "vulnerable_mcp_server.py"
 
 app = FastAPI(
     title="ARGOS",
@@ -94,6 +105,12 @@ class ReputationContributeRequest(BaseModel):
 # --------------------------------------------------------------------------- #
 # Endpoints
 # --------------------------------------------------------------------------- #
+@app.get("/", response_class=HTMLResponse)
+def dashboard() -> str:
+    """Panel visual de demostración."""
+    return DASHBOARD_HTML
+
+
 @app.get("/health")
 def health() -> dict:
     """Liveness probe."""
@@ -105,6 +122,24 @@ def analyze_component(req: ComponentAnalyzeRequest) -> RiskReport:
     """Puntúa un manifiesto MCP con las heurísticas OWASP MCP Top 10."""
     inventory = inventory_from_manifest(req.manifest)
     return analyze_inventory(inventory)
+
+
+# Endpoint SÍNCRONO a propósito: FastAPI lo ejecuta en un threadpool, así que el
+# ``asyncio.run`` interno de inventory_live_server no choca con el bucle de uvicorn.
+@app.post("/analyze/live")
+def analyze_live() -> dict:
+    """Analiza EN VIVO el servidor MCP de demostración (vulnerable) por stdio."""
+    inventory = inventory_live_server(sys.executable, [str(_DEMO_MCP_SERVER)])
+    report = analyze_inventory(inventory)
+    return {
+        "server_name": inventory.server_name,
+        "inventory": {
+            "tools": [{"name": t.name, "description": t.description} for t in inventory.tools],
+            "prompts": [{"name": p.name} for p in inventory.prompts],
+            "resources": [{"uri": r.uri} for r in inventory.resources],
+        },
+        "report": report.model_dump(mode="json"),
+    }
 
 
 @app.post("/analyze/interaction")
@@ -130,6 +165,15 @@ def analyze_interaction_endpoint(req: InteractionAnalyzeRequest) -> dict:
         "used_heuristic_fallback": fell_back,
         "raw": result.raw,
     }
+
+
+@app.post("/reputation/seed")
+def reputation_seed() -> dict:
+    """Siembra la base con el dataset de ataques de ejemplo (para la demo)."""
+    from data.seed import seed_db
+
+    seed_db(get_db())
+    return {"distinct_threats": len(get_db())}
 
 
 @app.post("/reputation/query")

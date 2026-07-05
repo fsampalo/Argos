@@ -15,7 +15,7 @@ Leyenda: ✅ hecho · 🟡 parcial · ⛔ stub / sin empezar
 | `core` modelos y taxonomías | ✅ | Real, testeado. |
 | `fingerprint_db` (huellas + mutaciones) | ✅ | **Diferenciador — implementado de verdad.** Almacén en memoria. |
 | `component_analyzer` scoring desde manifiesto | 🟡 | Heurísticas MCP01–MCP03; MCP04–MCP10 pendientes. |
-| `component_analyzer` conexión MCP en vivo | ⛔ | Stub `NotImplementedError`. |
+| `component_analyzer` conexión MCP en vivo (stdio) | ✅ | SDK oficial `mcp`; verificado contra servidor vulnerable de demo. |
 | `interaction_analyzer` guardián (DeBERTa) | 🟡 | Wrapper real + fallback heurístico. Falta evaluar. |
 | `api` (FastAPI) | ✅ | Endpoints conectados a módulos reales; DB en memoria. |
 | `data` dataset de ejemplo + seeding | 🟡 | Sample real; descarga de datasets públicos stub. |
@@ -39,8 +39,9 @@ Leyenda: ✅ hecho · 🟡 parcial · ⛔ stub / sin empezar
 ## Fase 2 — Component analyzer: de estático a en vivo (Semanas 3–4)
 **Objetivo: analizar servidores MCP reales, no solo manifiestos.**
 
-- ⛔ Implementar `inventory_live_server()` con un cliente MCP real (stdio + HTTP/SSE):
-  llamar a `tools/list`, `prompts/list`, `resources/list`.
+- ✅ `inventory_live_server()` con cliente MCP real por **stdio** (`tools/list`,
+  `prompts/list`, `resources/list`), verificado contra un servidor vulnerable de demo.
+- ⛔ Añadir transporte **HTTP/SSE** para analizar servidores remotos desplegados.
 - ⛔ Añadir heurísticas para MCP04–MCP10 (inyección de comandos, auth, transporte, logging).
 - 🟡 Mejorar la precisión de MCP01–MCP03 (reducir falsos positivos; fixtures).
 - ⛔ Cruzar hallazgos con el catálogo de CVEs de la Fase 1.
