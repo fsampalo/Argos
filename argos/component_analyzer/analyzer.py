@@ -94,6 +94,7 @@ async def inventory_live_server_async(
     args: Optional[Sequence[str]] = None,
     *,
     server_name: Optional[str] = None,
+    timeout: float = 25.0,
 ) -> ComponentInventory:
     """Conecta a un servidor MCP por stdio y enumera sus capacidades (async).
 
@@ -102,12 +103,15 @@ async def inventory_live_server_async(
     ignoran con gracia si el servidor no anuncia esa capacidad.
 
     Args:
-        command: ejecutable del servidor (p.ej. ``"python"``).
+        command: ejecutable del servidor (p.ej. ``"python"`` o ``"npx"``).
         args: argumentos (p.ej. ``["examples/vulnerable_mcp_server.py"]``).
         server_name: nombre para el informe; si se omite, se usa el del servidor.
+        timeout: segundos máximos para el handshake + enumeración (evita que un
+            servidor que no responda cuelgue la llamada).
 
     Raises:
         ImportError: si el paquete ``mcp`` no está instalado.
+        TimeoutError: si el servidor no responde a tiempo.
     """
     try:
         from mcp import ClientSession, StdioServerParameters
@@ -120,51 +124,54 @@ async def inventory_live_server_async(
 
     params = StdioServerParameters(command=command, args=list(args or []))
 
-    async with stdio_client(params) as (read, write):
-        async with ClientSession(read, write) as session:
-            init = await session.initialize()
+    async def _collect() -> ComponentInventory:
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as session:
+                init = await session.initialize()
 
-            tools_res = await session.list_tools()
-            tools = [
-                MCPTool(
-                    name=t.name,
-                    description=t.description or "",
-                    input_schema=getattr(t, "inputSchema", None) or {},
-                )
-                for t in tools_res.tools
-            ]
-
-            prompts = []
-            try:
-                prompts_res = await session.list_prompts()
-                prompts = [
-                    MCPPrompt(name=p.name, description=p.description or "")
-                    for p in prompts_res.prompts
-                ]
-            except Exception:  # noqa: BLE001 - capacidad opcional del servidor
-                pass
-
-            resources = []
-            try:
-                res_res = await session.list_resources()
-                resources = [
-                    MCPResource(
-                        uri=str(r.uri),
-                        name=r.name or "",
-                        mime_type=getattr(r, "mimeType", None),
+                tools_res = await session.list_tools()
+                tools = [
+                    MCPTool(
+                        name=t.name,
+                        description=t.description or "",
+                        input_schema=getattr(t, "inputSchema", None) or {},
                     )
-                    for r in res_res.resources
+                    for t in tools_res.tools
                 ]
-            except Exception:  # noqa: BLE001 - capacidad opcional del servidor
-                pass
 
-            name = server_name or getattr(init.serverInfo, "name", None) or command
-            return ComponentInventory(
-                server_name=name,
-                tools=tools,
-                prompts=prompts,
-                resources=resources,
-            )
+                prompts = []
+                try:
+                    prompts_res = await session.list_prompts()
+                    prompts = [
+                        MCPPrompt(name=p.name, description=p.description or "")
+                        for p in prompts_res.prompts
+                    ]
+                except Exception:  # noqa: BLE001 - capacidad opcional del servidor
+                    pass
+
+                resources = []
+                try:
+                    res_res = await session.list_resources()
+                    resources = [
+                        MCPResource(
+                            uri=str(r.uri),
+                            name=r.name or "",
+                            mime_type=getattr(r, "mimeType", None),
+                        )
+                        for r in res_res.resources
+                    ]
+                except Exception:  # noqa: BLE001 - capacidad opcional del servidor
+                    pass
+
+                name = server_name or getattr(init.serverInfo, "name", None) or command
+                return ComponentInventory(
+                    server_name=name,
+                    tools=tools,
+                    prompts=prompts,
+                    resources=resources,
+                )
+
+    return await asyncio.wait_for(_collect(), timeout=timeout)
 
 
 def inventory_live_server(
@@ -172,6 +179,7 @@ def inventory_live_server(
     args: Optional[Sequence[str]] = None,
     *,
     server_name: Optional[str] = None,
+    timeout: float = 25.0,
 ) -> ComponentInventory:
     """Versión síncrona de :func:`inventory_live_server_async` (usa ``asyncio.run``).
 
@@ -179,7 +187,7 @@ def inventory_live_server(
     directamente la variante async.
     """
     return asyncio.run(
-        inventory_live_server_async(command, args, server_name=server_name)
+        inventory_live_server_async(command, args, server_name=server_name, timeout=timeout)
     )
 
 
@@ -188,7 +196,8 @@ def analyze_live_server(
     args: Optional[Sequence[str]] = None,
     *,
     server_name: Optional[str] = None,
+    timeout: float = 25.0,
 ) -> RiskReport:
     """Análisis extremo a extremo de un servidor MCP en vivo (inventario + scoring)."""
-    inventory = inventory_live_server(command, args, server_name=server_name)
+    inventory = inventory_live_server(command, args, server_name=server_name, timeout=timeout)
     return analyze_inventory(inventory)

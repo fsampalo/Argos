@@ -28,8 +28,9 @@ from __future__ import annotations
 import sys
 from functools import lru_cache
 from pathlib import Path
+from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
@@ -124,15 +125,47 @@ def analyze_component(req: ComponentAnalyzeRequest) -> RiskReport:
     return analyze_inventory(inventory)
 
 
+class LiveAnalyzeRequest(BaseModel):
+    """Servidor MCP a analizar en vivo por stdio.
+
+    Si ``command`` se omite, se analiza el servidor de demostración vulnerable
+    incluido. Para un servidor propio: ``command`` (p.ej. "python", "npx", "node")
+    y ``args`` (p.ej. ["-y", "@modelcontextprotocol/server-filesystem", "/ruta"]).
+    """
+
+    command: Optional[str] = None
+    args: list[str] = Field(default_factory=list)
+    server_name: Optional[str] = None
+
+
 # Endpoint SÍNCRONO a propósito: FastAPI lo ejecuta en un threadpool, así que el
 # ``asyncio.run`` interno de inventory_live_server no choca con el bucle de uvicorn.
 @app.post("/analyze/live")
-def analyze_live() -> dict:
-    """Analiza EN VIVO el servidor MCP de demostración (vulnerable) por stdio."""
-    inventory = inventory_live_server(sys.executable, [str(_DEMO_MCP_SERVER)])
+def analyze_live(req: LiveAnalyzeRequest) -> dict:
+    """Analiza EN VIVO un servidor MCP por stdio (el de demo, o uno a medida)."""
+    if req.command:
+        command, args = req.command, req.args
+    else:
+        command, args = sys.executable, [str(_DEMO_MCP_SERVER)]
+
+    try:
+        inventory = inventory_live_server(command, args, server_name=req.server_name)
+    except TimeoutError:
+        raise HTTPException(
+            status_code=504,
+            detail="El servidor MCP no respondió a tiempo. ¿Es un servidor MCP "
+                   "válido por stdio y el comando es correcto?",
+        )
+    except Exception as exc:  # noqa: BLE001 - devolver el fallo al cliente, no 500 opaco
+        raise HTTPException(
+            status_code=400,
+            detail=f"No se pudo conectar/inventariar el servidor: {exc}",
+        )
+
     report = analyze_inventory(inventory)
     return {
         "server_name": inventory.server_name,
+        "command": f"{command} {' '.join(args)}".strip(),
         "inventory": {
             "tools": [{"name": t.name, "description": t.description} for t in inventory.tools],
             "prompts": [{"name": p.name} for p in inventory.prompts],
